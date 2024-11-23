@@ -1,7 +1,6 @@
 "use client";
+
 import React, { useState, useRef, useEffect } from "react";
-import { ref, push, set } from "firebase/database";
-import { database } from "@/app/lib/firebase";
 import StreamingAvatar from "@heygen/streaming-avatar";
 import {
   AvatarQuality,
@@ -25,6 +24,7 @@ const TakeASurvey = () => {
   const [isAvatarSpeaking, setIsAvatarSpeaking] = useState(false);
   const [chatInput, setChatInput] = useState(""); // Text input for chat
   const [isListening, setIsListening] = useState(false); // Listening state
+  const [isIntro, setIsIntro] = useState(true); // State to track intro vs survey
   const questions = [
     "Little interest or pleasure in doing things?",
     "Feeling down, depressed, or hopeless?",
@@ -73,8 +73,7 @@ const TakeASurvey = () => {
 
     await avatarRef.current.createStartAvatar({
       quality: AvatarQuality.High,
-      // avatarName: "Eric_public_pro2_20230608",
-      avatarName: "Wayne_20240711",
+      avatarName: "Wayne_20240711", // Replace with your HeyGen Avatar ID
       disableIdleTimeout: true,
     });
 
@@ -96,35 +95,70 @@ const TakeASurvey = () => {
       return;
     }
 
-    await set(ref(database, `surveys/${userName}`), {
-      name: userName,
-      responses: [],
-    });
+    try {
+      const response = await fetch("/api/savesurvey", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userName }),
+      });
 
-    setIsSurveyInProgress(true);
-    await startAvatarSession();
-    await speakMessage(
-      `Hello ${userName}! I am here to guide you through the Personal Health Questionnaire. Are you ready to begin?`
-    );
+      if (response.ok) {
+        setIsSurveyInProgress(true);
+        await startAvatarSession();
+        await speakMessage(
+          `Hello ${userName}! I am here to guide you through the Personal Health Questionnaire. Are you ready to begin? Please answer in Yes or No.`
+        );
+      } else {
+        console.error("Failed to initialize survey");
+      }
+    } catch (error) {
+      console.error("Error starting survey:", error);
+    }
   };
 
   const saveResponse = async (response: string) => {
-    const surveyRef = ref(database, `surveys/${userName}`);
-    const newResponseRef = push(surveyRef);
+    if (isIntro) {
+      if (
+        response.toLowerCase().includes("yes") ||
+        response.toLowerCase().includes("yes i am ready")
+      ) {
+        setIsIntro(false);
+        setIsSurveyInProgress(true);
+        speakMessage(questions[currentQuestionIndex]);
+      } else {
+        speakMessage("Alright, let me know when you're ready to start.");
+        setIsSurveyInProgress(false);
+      }
+      return;
+    }
 
-    await set(newResponseRef, {
-      question: questions[currentQuestionIndex],
-      answer: response,
-    });
+    try {
+      const result = await fetch("/api/savesurvey", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userName,
+          responses: [
+            { question: questions[currentQuestionIndex], answer: response },
+          ],
+        }),
+      });
 
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-      speakMessage(questions[currentQuestionIndex + 1]);
-    } else {
-      await speakMessage(
-        `Thank you, ${userName}, for completing the survey! Your responses have been recorded.`
-      );
-      setIsSurveyInProgress(false);
+      if (result.ok) {
+        if (currentQuestionIndex < questions.length - 1) {
+          setCurrentQuestionIndex(currentQuestionIndex + 1);
+          speakMessage(questions[currentQuestionIndex + 1]);
+        } else {
+          await speakMessage(
+            `Thank you, ${userName}, for completing the survey! Your responses have been recorded.`
+          );
+          setIsSurveyInProgress(false);
+        }
+      } else {
+        console.error("Failed to save response");
+      }
+    } catch (error) {
+      console.error("Error saving response:", error);
     }
   };
 
@@ -325,3 +359,20 @@ const TakeASurvey = () => {
 };
 
 export default TakeASurvey;
+
+// "use client";
+
+// import SurveyAvatar from "@/components/SurveyAvatar";
+
+// export default function Suvery() {
+
+//   return (
+//     <div className="w-screen h-screen flex flex-col">
+//       <div className="w-[900px] flex flex-col items-start justify-start gap-5 mx-auto pt-4 pb-20">
+//         <div className="w-full">
+//           <SurveyAvatar />
+//         </div>
+//       </div>
+//     </div>
+//   );
+// }
