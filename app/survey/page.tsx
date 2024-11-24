@@ -8,6 +8,7 @@ import {
   TaskType,
   StreamingEvents,
 } from "@heygen/streaming-avatar";
+import { IoMicOutline, IoMicOffSharp } from "react-icons/io5";
 
 declare global {
   interface Window {
@@ -127,7 +128,6 @@ const TakeASurvey = () => {
         speakMessage(questions[currentQuestionIndex]);
       } else {
         speakMessage("Alright, let me know when you're ready to start.");
-        setIsSurveyInProgress(false);
       }
       return;
     }
@@ -336,20 +336,26 @@ const TakeASurvey = () => {
               >
                 Submit
               </button>
-              <button
-                onClick={handleVoiceAnswer}
+              {/* Mic Icon */}
+              <div
+                onClick={isListening ? undefined : handleVoiceAnswer}
                 style={{
-                  padding: "10px 20px",
-                  backgroundColor: isListening ? "#999" : "#FFD700",
-                  color: "#000",
-                  border: "none",
-                  borderRadius: "5px",
-                  fontWeight: "bold",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "50px",
+                  height: "50px",
+                  borderRadius: "50%",
+                  backgroundColor: isListening ? "#FFD700" : "#444",
                   cursor: isListening ? "not-allowed" : "pointer",
                 }}
               >
-                {isListening ? "Listening..." : "Speak"}
-              </button>
+                {isListening ? (
+                  <IoMicOffSharp color="#000" size={24} />
+                ) : (
+                  <IoMicOutline color="#fff" size={24} />
+                )}
+              </div>
             </div>
           </div>
         </div>
