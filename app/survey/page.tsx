@@ -72,23 +72,23 @@ const TakeASurvey = () => {
         mediaStream.current.play();
       }
     });
-    avatarRef.current?.on(StreamingEvents.USER_START, (event) => {
-      console.log(">>>>> User started talking:", event);
-      // setIsUserTalking(true);
-    });
-    avatarRef.current?.on(StreamingEvents.USER_STOP, (event) => {
-      console.log(">>>>> User stopped talking:", event);
-      // setIsUserTalking(false);
-    });
+    // avatarRef.current?.on(StreamingEvents.USER_START, (event) => {
+    //   console.log(">>>>> User started talking:", event);
+    //   // setIsUserTalking(true);
+    // });
+    // avatarRef.current?.on(StreamingEvents.USER_STOP, (event) => {
+    //   console.log(">>>>> User stopped talking:", event);
+    //   // setIsUserTalking(false);
+    // });
     await avatarRef.current.createStartAvatar({
       quality: AvatarQuality.High,
       avatarName: "Wayne_20240711", // Replace with your HeyGen Avatar ID
       disableIdleTimeout: true,
     });
 
-    await avatarRef.current?.startVoiceChat({
-      useSilencePrompt: false,
-    });
+    // await avatarRef.current?.startVoiceChat({
+    //   useSilencePrompt: false,
+    // });
 
     setIsLoadingSession(false);
   };
@@ -383,89 +383,6 @@ const TakeASurvey = () => {
             </div>
           </div>
         </div>
-
-        // <div style={{ textAlign: "center" }}>
-        //   <p style={{ fontSize: "1.5rem", marginBottom: "20px" }}>
-        //     Survey in progress...
-        //   </p>
-        //   <div
-        //     style={{
-        //       display: "flex",
-        //       flexDirection: "column",
-        //       alignItems: "center",
-        //       gap: "20px",
-        //     }}
-        //   >
-        //     <video
-        //       ref={mediaStream}
-        //       autoPlay
-        //       playsInline
-        //       style={{
-        //         width: "80%",
-        //         height: "auto",
-        //         border: "2px solid #FFD700",
-        //         borderRadius: "10px",
-        //       }}
-        //     />
-        //     <div
-        //       style={{
-        //         display: "flex",
-        //         alignItems: "center",
-        //         gap: "10px",
-        //         width: "80%",
-        //       }}
-        //     >
-        //       <input
-        //         type="text"
-        //         value={chatInput}
-        //         onChange={(e) => setChatInput(e.target.value)}
-        //         placeholder="Type your answer here..."
-        //         style={{
-        //           flex: "1",
-        //           padding: "10px",
-        //           borderRadius: "5px",
-        //           border: "1px solid #444",
-        //           backgroundColor: "#222",
-        //           color: "#fff",
-        //         }}
-        //       />
-        //       <button
-        //         onClick={handleTextAnswer}
-        //         style={{
-        //           padding: "10px 20px",
-        //           backgroundColor: "#FFD700",
-        //           color: "#000",
-        //           border: "none",
-        //           borderRadius: "5px",
-        //           fontWeight: "bold",
-        //           cursor: "pointer",
-        //         }}
-        //       >
-        //         Submit
-        //       </button>
-        //       {/* Mic Icon */}
-        //       <div
-        //         onClick={isListening ? undefined : handleVoiceAnswer}
-        //         style={{
-        //           display: "flex",
-        //           alignItems: "center",
-        //           justifyContent: "center",
-        //           width: "50px",
-        //           height: "50px",
-        //           borderRadius: "50%",
-        //           backgroundColor: isListening ? "#FFD700" : "#444",
-        //           cursor: isListening ? "not-allowed" : "pointer",
-        //         }}
-        //       >
-        //         {isListening ? (
-        //           <IoMicOffSharp color="#000" size={24} />
-        //         ) : (
-        //           <IoMicOutline color="#fff" size={24} />
-        //         )}
-        //       </div>
-        //     </div>
-        //   </div>
-        // </div>
       )}
     </div>
   );
