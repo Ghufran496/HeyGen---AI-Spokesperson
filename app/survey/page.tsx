@@ -19,14 +19,18 @@ declare global {
 
 const TakeASurvey = () => {
   const [isLoadingSession, setIsLoadingSession] = useState(false);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  // const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userName, setUserName] = useState("");
   const [isSurveyInProgress, setIsSurveyInProgress] = useState(false);
   const [isAvatarSpeaking, setIsAvatarSpeaking] = useState(false);
   const [chatInput, setChatInput] = useState(""); // Text input for chat
   const [isListening, setIsListening] = useState(false); // Listening state
-  
-  const [isIntro, setIsIntro] = useState(true); // State to track intro vs survey
+
+  //const [isIntro, setIsIntro] = useState(true); // State to track intro vs survey
+
+  const isIntro = useRef(true); // Replacing useState with useRef
+  const currentQuestionIndex = useRef(0); // Replacing useState with useRef
+
   const questions = [
     "Little interest or pleasure in doing things?",
     "Feeling down, depressed, or hopeless?",
@@ -38,6 +42,17 @@ const TakeASurvey = () => {
     "Moving or speaking so slowly that other people could have noticed? Or the opposite — being so fidgety or restless that you have been moving around a lot more than usual",
     "Thoughts that you would be better off dead or of hurting yourself in some way",
   ];
+
+  if (!("SpeechRecognition" in window || "webkitSpeechRecognition" in window)) {
+    alert(
+      "Your browser does not support speech recognition. Please type your answer."
+    );
+    return;
+  }
+
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+  const recognition = new SpeechRecognition();
 
   const avatarRef = useRef<StreamingAvatar | null>(null);
   const mediaStream = useRef<HTMLVideoElement>(null);
@@ -64,6 +79,48 @@ const TakeASurvey = () => {
 
     avatarRef.current.on(StreamingEvents.AVATAR_STOP_TALKING, () => {
       setIsAvatarSpeaking(false);
+      if (
+        !("SpeechRecognition" in window || "webkitSpeechRecognition" in window)
+      ) {
+        alert(
+          "Your browser does not support speech recognition. Please type your answer."
+        );
+        return;
+      }
+
+      // const SpeechRecognition =
+      //   window.SpeechRecognition || window.webkitSpeechRecognition;
+      // const recognition = new SpeechRecognition();
+
+      recognition.lang = "en-US";
+      recognition.interimResults = false;
+      recognition.continuous = false;
+
+      setIsListening(true);
+      // if (chatInput == "") {
+      recognition.start();
+      // }
+
+      if (currentQuestionIndex.current == questions.length - 1) {
+        recognition.stop();
+      }
+      recognition.onresult = async (event: any) => {
+        const voiceAnswer = event.results[0][0].transcript;
+        setIsListening(false);
+
+        if (voiceAnswer.trim() !== "") {
+          await saveResponse(voiceAnswer, recognition);
+        } else {
+          await speakMessage(
+            "I didn't catch that. Could you repeat your answer?"
+          );
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        setIsListening(false);
+        alert("Could not process your voice input. Please try again.");
+      };
     });
 
     avatarRef.current.on(StreamingEvents.STREAM_READY, (event) => {
@@ -72,23 +129,11 @@ const TakeASurvey = () => {
         mediaStream.current.play();
       }
     });
-    // avatarRef.current?.on(StreamingEvents.USER_START, (event) => {
-    //   console.log(">>>>> User started talking:", event);
-    //   // setIsUserTalking(true);
-    // });
-    // avatarRef.current?.on(StreamingEvents.USER_STOP, (event) => {
-    //   console.log(">>>>> User stopped talking:", event);
-    //   // setIsUserTalking(false);
-    // });
     await avatarRef.current.createStartAvatar({
       quality: AvatarQuality.High,
       avatarName: "Wayne_20240711", // Replace with your HeyGen Avatar ID
       disableIdleTimeout: true,
     });
-
-    // await avatarRef.current?.startVoiceChat({
-    //   useSilencePrompt: false,
-    // });
 
     setIsLoadingSession(false);
   };
@@ -129,15 +174,17 @@ const TakeASurvey = () => {
     }
   };
 
-  const saveResponse = async (response: string) => {
-    if (isIntro) {
+  const saveResponse = async (response: string, recognition?: any) => {
+    if (isIntro.current) {
+      console.log(isIntro, "isIntro");
       if (
         response.toLowerCase().includes("yes") ||
         response.toLowerCase().includes("yes i am ready")
       ) {
-        setIsIntro(false);
+        isIntro.current = false;
         setIsSurveyInProgress(true);
-        speakMessage(questions[currentQuestionIndex]);
+        console.log(isIntro, "isIntro");
+        speakMessage(questions[currentQuestionIndex.current]);
       } else {
         speakMessage("Alright, let me know when you're ready to start.");
       }
@@ -151,15 +198,23 @@ const TakeASurvey = () => {
         body: JSON.stringify({
           userName,
           responses: [
-            { question: questions[currentQuestionIndex], answer: response },
+            {
+              question: questions[currentQuestionIndex.current],
+              answer: response,
+            },
           ],
         }),
       });
 
       if (result.ok) {
-        if (currentQuestionIndex < questions.length - 1) {
-          setCurrentQuestionIndex(currentQuestionIndex + 1);
-          speakMessage(questions[currentQuestionIndex + 1]);
+        recognition.stop();
+        console.log("questions.length", questions.length);
+        console.log("before currentQuestionIndex", currentQuestionIndex);
+        if (currentQuestionIndex.current < questions.length - 1) {
+          console.log("after currentQuestionIndex", currentQuestionIndex);
+          currentQuestionIndex.current += 1;
+          // setCurrentQuestionIndex(index);
+          speakMessage(questions[currentQuestionIndex.current]);
         } else {
           await speakMessage(
             `Thank you, ${userName}, for completing the survey! Your responses have been recorded.`
@@ -182,7 +237,14 @@ const TakeASurvey = () => {
       );
       return;
     }
-    await saveResponse(chatInput);
+
+    recognition.stop();
+
+    recognition.onend = () => {
+      console.log("Speech recognition stopped.");
+      setIsListening(false);
+    };
+    await saveResponse(chatInput, recognition);
     setChatInput("");
   };
 
@@ -212,7 +274,7 @@ const TakeASurvey = () => {
       setIsListening(false);
 
       if (voiceAnswer.trim() !== "") {
-        await saveResponse(voiceAnswer);
+        await saveResponse(voiceAnswer, recognition);
       } else {
         await speakMessage(
           "I didn't catch that. Could you repeat your answer?"
