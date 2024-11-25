@@ -58,7 +58,7 @@ export default function NavBar() {
             }
             onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
           >
-            Take a Survey
+            Start Questionnaire
           </Link>
           <ThemeSwitch />
         </NavbarItem>
