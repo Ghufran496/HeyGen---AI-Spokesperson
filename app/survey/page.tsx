@@ -25,12 +25,13 @@ const TakeASurvey = () => {
   const [isAvatarSpeaking, setIsAvatarSpeaking] = useState(false);
   const [chatInput, setChatInput] = useState(""); // Text input for chat
   const [isListening, setIsListening] = useState(false); // Listening state
+  // const [ischeckText, setcheckText] = useState(false);
 
   //const [isIntro, setIsIntro] = useState(true); // State to track intro vs survey
 
   const isIntro = useRef(true); // Replacing useState with useRef
   const currentQuestionIndex = useRef(0); // Replacing useState with useRef
-
+  const ischeckText= useRef(false);
   const questions = [
     "Little interest or pleasure in doing things?",
     "Feeling down, depressed, or hopeless?",
@@ -43,16 +44,16 @@ const TakeASurvey = () => {
     "Thoughts that you would be better off dead or of hurting yourself in some way",
   ];
 
-  if (!("SpeechRecognition" in window || "webkitSpeechRecognition" in window)) {
-    alert(
-      "Your browser does not support speech recognition. Please type your answer."
-    );
-    return;
-  }
+  // if (!("SpeechRecognition" in window || "webkitSpeechRecognition" in window)) {
+  //   alert(
+  //     "Your browser does not support speech recognition. Please type your answer."
+  //   );
+  //   return;
+  // }
 
-  const SpeechRecognition =
-    window.SpeechRecognition || window.webkitSpeechRecognition;
-  const recognition = new SpeechRecognition();
+  // const SpeechRecognition =
+  //   window.SpeechRecognition || window.webkitSpeechRecognition;
+  // const recognition = new SpeechRecognition();
 
   const avatarRef = useRef<StreamingAvatar | null>(null);
   const mediaStream = useRef<HTMLVideoElement>(null);
@@ -65,78 +66,332 @@ const TakeASurvey = () => {
     throw new Error("Failed to fetch access token");
   };
 
+  // const startAvatarSession = async () => {
+  //   setIsLoadingSession(true);
+  //   const accessToken = await fetchAccessToken();
+
+  //   avatarRef.current = new StreamingAvatar({
+  //     token: accessToken,
+  //   });
+
+  //   avatarRef.current.on(StreamingEvents.AVATAR_START_TALKING, () => {
+  //     setIsAvatarSpeaking(true);
+  //   });
+
+  //   avatarRef.current.on(StreamingEvents.AVATAR_STOP_TALKING, () => {
+  //     setIsAvatarSpeaking(false);
+  //     if (
+  //       !("SpeechRecognition" in window || "webkitSpeechRecognition" in window)
+  //     ) {
+  //       alert(
+  //         "Your browser does not support speech recognition. Please type your answer."
+  //       );
+  //       return;
+  //     }
+
+  //     const SpeechRecognition =
+  //       window.SpeechRecognition || window.webkitSpeechRecognition;
+  //     const recognition = new SpeechRecognition();
+
+  //     recognition.lang = "en-US";
+  //     recognition.interimResults = false;
+  //     recognition.continuous = false;
+
+  //     setIsListening(true);
+  //     // if (chatInput == "") {
+  //     recognition.start();
+  //     // }
+
+  //     if (currentQuestionIndex.current == questions.length - 1) {
+  //       recognition.stop();
+  //     }
+  //     recognition.onresult = async (event: any) => {
+  //       const voiceAnswer = event.results[0][0].transcript;
+  //       setIsListening(false);
+
+  //       if (voiceAnswer.trim() !== "") {
+  //         await saveResponse(voiceAnswer, recognition);
+  //       } else {
+  //         await speakMessage(
+  //           "I didn't catch that. Could you repeat your answer?"
+  //         );
+  //       }
+  //       setInterval(() => {
+          
+  //     }, 3000);
+  //     };
+
+  //     recognition.onerror = (event: any) => {
+  //       setIsListening(false);
+  //       alert("Could not process your voice input. Please try again.");
+  //     };
+  //   });
+
+  //   avatarRef.current.on(StreamingEvents.STREAM_READY, (event) => {
+  //     if (mediaStream.current) {
+  //       mediaStream.current.srcObject = event.detail;
+  //       mediaStream.current.play();
+  //     }
+  //   });
+  //   await avatarRef.current.createStartAvatar({
+  //     quality: AvatarQuality.High,
+  //     avatarName: "Wayne_20240711", // Replace with your HeyGen Avatar ID
+  //     disableIdleTimeout: true,
+  //   });
+
+  //   setIsLoadingSession(false);
+  // };
+  // const startAvatarSession = async () => {
+  //   setIsLoadingSession(true);
+  
+  //   try {
+  //     const accessToken = await fetchAccessToken();
+  
+  //     avatarRef.current = new StreamingAvatar({
+  //       token: accessToken,
+  //     });
+  
+  //     // Handle avatar start talking event
+  //     avatarRef.current.on(StreamingEvents.AVATAR_START_TALKING, () => {
+  //       setIsAvatarSpeaking(true);
+  //     });
+  
+  //     // Handle avatar stop talking event
+  //     avatarRef.current.on(StreamingEvents.AVATAR_STOP_TALKING, () => {
+  //       setIsAvatarSpeaking(false);
+  
+  //       // Check if browser supports speech recognition
+  //       if (
+  //         !("SpeechRecognition" in window || "webkitSpeechRecognition" in window)
+  //       ) {
+  //         alert(
+  //           "Your browser does not support speech recognition. Please type your answer."
+  //         );
+  //         return;
+  //       }
+  
+  //       const SpeechRecognition =
+  //         window.SpeechRecognition || window.webkitSpeechRecognition;
+  //       const recognition = new SpeechRecognition();
+  
+  //       recognition.lang = "en-US";
+  //       recognition.interimResults = false;
+  //       recognition.continuous = false;
+  
+  //       let silenceTimeout:any; // Timer for detecting silence
+  
+  //       // Reset silence timeout
+  //       const resetSilenceTimeout = () => {
+  //         clearTimeout(silenceTimeout);
+  //         silenceTimeout = setTimeout(() => {
+  //           recognition.stop(); 
+  //           setIsListening(false);
+           
+  //         }, 2000); // 3-second timeout
+  //       };
+  
+  //       // Start listening for speech
+  //       recognition.start();
+  //       setIsListening(true);
+  
+  //       // Handle speech results
+  //       recognition.onresult = async (event:any) => {
+  //         clearTimeout(silenceTimeout); // Clear silence timer
+  //         const voiceAnswer = event.results[0][0].transcript;
+  //         setIsListening(false);
+  
+  //         if (voiceAnswer.trim() !== "") {
+  //           await saveResponse(voiceAnswer, recognition);
+  //         } else {
+  //           await speakMessage(
+  //             "I didn't catch that. Could you repeat your answer?"
+  //           );
+  //         }
+  
+  //         // Stop recognition if it's the last question
+  //         if (currentQuestionIndex.current === questions.length - 1) {
+  //           recognition.stop();
+  //         }
+  //       };
+  
+  //       // Handle recognition errors
+  //       recognition.onerror = (event:any) => {
+  //         setIsListening(false);
+  //         clearTimeout(silenceTimeout); // Clear timer on error
+  //         alert("Could not process your voice input. Please try again.");
+  //       };
+  
+  //       // Stop recognition on end
+  //       recognition.onend = () => {
+  //         setIsListening(false);
+  //         clearTimeout(silenceTimeout);
+  //       };
+  
+  //       // Reset silence timer on each recognition event
+  //       recognition.onspeechstart = resetSilenceTimeout;
+  //       recognition.onspeechend = resetSilenceTimeout;
+  
+  //       // Initialize silence timeout
+  //       resetSilenceTimeout();
+  //     });
+  
+  //     // Handle stream ready event
+  //     avatarRef.current.on(StreamingEvents.STREAM_READY, (event) => {
+  //       if (mediaStream.current) {
+  //         mediaStream.current.srcObject = event.detail;
+  //         mediaStream.current.play();
+  //       }
+  //     });
+  
+  //     // Start avatar session
+  //     await avatarRef.current.createStartAvatar({
+  //       quality: AvatarQuality.High,
+  //       avatarName: "Wayne_20240711", // Replace with your HeyGen Avatar ID
+  //       disableIdleTimeout: true,
+  //     });
+  
+  //   } catch (error) {
+  //     console.error("Failed to start avatar session:", error);
+  //     alert("An error occurred while starting the avatar session.");
+  //   } finally {
+  //     setIsLoadingSession(false);
+  //   }
+  // };
+  useEffect(()=>{
+    if( chatInput!==""){
+      ischeckText.current=true;
+      
+    }
+    console.log("oke",ischeckText)
+    
+  })
   const startAvatarSession = async () => {
     setIsLoadingSession(true);
-    const accessToken = await fetchAccessToken();
-
-    avatarRef.current = new StreamingAvatar({
-      token: accessToken,
-    });
-
-    avatarRef.current.on(StreamingEvents.AVATAR_START_TALKING, () => {
-      setIsAvatarSpeaking(true);
-    });
-
-    avatarRef.current.on(StreamingEvents.AVATAR_STOP_TALKING, () => {
-      setIsAvatarSpeaking(false);
-      if (
-        !("SpeechRecognition" in window || "webkitSpeechRecognition" in window)
-      ) {
-        alert(
-          "Your browser does not support speech recognition. Please type your answer."
-        );
-        return;
-      }
-
-      // const SpeechRecognition =
-      //   window.SpeechRecognition || window.webkitSpeechRecognition;
-      // const recognition = new SpeechRecognition();
-
-      recognition.lang = "en-US";
-      recognition.interimResults = false;
-      recognition.continuous = false;
-
-      setIsListening(true);
-      // if (chatInput == "") {
-      recognition.start();
-      // }
-
-      if (currentQuestionIndex.current == questions.length - 1) {
-        recognition.stop();
-      }
-      recognition.onresult = async (event: any) => {
-        const voiceAnswer = event.results[0][0].transcript;
-        setIsListening(false);
-
-        if (voiceAnswer.trim() !== "") {
-          await saveResponse(voiceAnswer, recognition);
-        } else {
-          await speakMessage(
-            "I didn't catch that. Could you repeat your answer?"
+  
+    try {
+      const accessToken = await fetchAccessToken();
+  
+      avatarRef.current = new StreamingAvatar({
+        token: accessToken,
+      });
+  
+      // Handle avatar start talking event
+      avatarRef.current.on(StreamingEvents.AVATAR_START_TALKING, () => {
+        setIsAvatarSpeaking(true);
+      });
+  
+      // Handle avatar stop talking event
+      avatarRef.current.on(StreamingEvents.AVATAR_STOP_TALKING, () => {
+        setIsAvatarSpeaking(false);
+  
+        // Check if browser supports speech recognition
+        if (
+          !("SpeechRecognition" in window || "webkitSpeechRecognition" in window)
+        ) {
+          alert(
+            "Your browser does not support speech recognition. Please type your answer."
           );
+          return;
         }
-      };
+  
+        const SpeechRecognition =
+          window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        console.dir(recognition);
+  
+        recognition.lang = "en-US";
+        recognition.interimResults = false;
+        recognition.continuous = false;
+  
+        let silenceTimeout:any; // Timer for detecting silence
+  
+        // Start listening for speech
+        recognition.start();
+        setIsListening(true);
+  
+        // Reset silence timeout
+        const resetSilenceTimeout = () => {
+          clearTimeout(silenceTimeout);
+          silenceTimeout = setTimeout(() => {
+            if(ischeckText.current){
+               recognition.stop();
+                setIsListening(false);
+                console.log("Speech recognition stopped due to inactivity.");
+            }
+           
+            // Stop recognition after silence
+            
+          
+          }, 2000); // 3-second timeout
+        };
+        
+        resetSilenceTimeout();
+        // Handle speech results
+        recognition.onresult = async (event:any) => {
+           // Reset silence timeout on valid speech
+          
+          const voiceAnswer = event.results[0][0].transcript;
+          setIsListening(false);
+          console.log(voiceAnswer,"voice")
+  
+          if (voiceAnswer.trim() !== "") {
 
-      recognition.onerror = (event: any) => {
-        setIsListening(false);
-        alert("Could not process your voice input. Please try again.");
-      };
-    });
+            await saveResponse(voiceAnswer, recognition);
+          } else {
+             
+            await speakMessage(
+              "I didn't catch that. Could you repeat your answer?"
+            );
 
-    avatarRef.current.on(StreamingEvents.STREAM_READY, (event) => {
-      if (mediaStream.current) {
-        mediaStream.current.srcObject = event.detail;
-        mediaStream.current.play();
-      }
-    });
-    await avatarRef.current.createStartAvatar({
-      quality: AvatarQuality.High,
-      avatarName: "Wayne_20240711", // Replace with your HeyGen Avatar ID
-      disableIdleTimeout: true,
-    });
-
-    setIsLoadingSession(false);
+          }
+  
+          // Stop recognition if it's the last question
+          if (currentQuestionIndex.current === questions.length - 1) {
+            recognition.stop();
+          }
+        };
+  
+        // Handle recognition errors
+        recognition.onerror = (event:any) => {
+          setIsListening(false);
+          clearTimeout(silenceTimeout); // Clear timer on error
+          console.error("Speech recognition error:", event.error);
+          alert("Could not process your voice input. Please try again.");
+        };
+  
+        // Stop recognition on end
+        recognition.onend = () => {
+          setIsListening(false);
+          clearTimeout(silenceTimeout);
+        };
+  
+        // Initialize silence timeout
+        // resetSilenceTimeout();
+      });
+  
+      // Handle stream ready event
+      avatarRef.current.on(StreamingEvents.STREAM_READY, (event) => {
+        if (mediaStream.current) {
+          mediaStream.current.srcObject = event.detail;
+          mediaStream.current.play();
+        }
+      });
+  
+      // Start avatar session
+      await avatarRef.current.createStartAvatar({
+        quality: AvatarQuality.High,
+        avatarName: "Wayne_20240711", // Replace with your HeyGen Avatar ID
+        disableIdleTimeout: true,
+      });
+    } catch (error) {
+      console.error("Failed to start avatar session:", error);
+      alert("An error occurred while starting the avatar session.");
+    } finally {
+      setIsLoadingSession(false);
+    }
   };
+  
+  
 
   const speakMessage = async (message: any) => {
     if (!avatarRef.current) return;
@@ -182,6 +437,7 @@ const TakeASurvey = () => {
         response.toLowerCase().includes("yes i am ready")
       ) {
         isIntro.current = false;
+        ischeckText.current=false;
         setIsSurveyInProgress(true);
         console.log(isIntro, "isIntro");
         speakMessage(questions[currentQuestionIndex.current]);
@@ -207,7 +463,15 @@ const TakeASurvey = () => {
       });
 
       if (result.ok) {
-        recognition.stop();
+        // if(isListening ){recognition.stop();}
+        // if(!ischeckText.current){
+          
+        //   recognition.stop();
+        
+        // }
+        ischeckText.current=false;
+        
+        console.log(ischeckText.current,'inssside')
         console.log("questions.length", questions.length);
         console.log("before currentQuestionIndex", currentQuestionIndex);
         if (currentQuestionIndex.current < questions.length - 1) {
@@ -231,6 +495,8 @@ const TakeASurvey = () => {
 
   const handleTextAnswer = async () => {
     setIsListening(false);
+    ischeckText.current=true;
+    console.log("ss",ischeckText)
     if (chatInput.trim() === "") {
       await speakMessage(
         "I didn't catch that. Could you please type your answer?"
@@ -238,14 +504,15 @@ const TakeASurvey = () => {
       return;
     }
 
-    recognition.stop();
+    // recognition.stop();
 
-    recognition.onend = () => {
-      console.log("Speech recognition stopped.");
-      setIsListening(false);
-    };
-    await saveResponse(chatInput, recognition);
+    // recognition.onend = () => {
+    //   console.log("Speech recognition stopped.");
+    //   setIsListening(false);
+    // };
     setChatInput("");
+    await saveResponse(chatInput);
+    
   };
 
   const handleVoiceAnswer = async () => {
@@ -288,6 +555,7 @@ const TakeASurvey = () => {
     };
   };
 
+  
   useEffect(() => {
     return () => {
       avatarRef.current?.stopAvatar();
@@ -419,6 +687,7 @@ const TakeASurvey = () => {
                   fontWeight: "bold",
                   cursor: "pointer",
                 }}
+                disabled={isAvatarSpeaking}
               >
                 Submit
               </button>
